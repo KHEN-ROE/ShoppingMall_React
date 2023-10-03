@@ -6,10 +6,31 @@ import './App.css';
 import {useState} from "react";
 import data from './data.js';
 import Shoes from "./Shoes";
+import {Routes, Route, useNavigate} from 'react-router-dom'
+import {Detail} from "./routes/Detail";
+import {About} from "./routes/About";
+import {Event} from "./routes/Event";
+import axios from "axios";
 
 function App() {
 
     let [shoes, setShoes] = useState(data);
+    let navigate = useNavigate();
+
+     const getData = async () => {
+        await axios.get('https://codingapple1.github.io/shop/data2.json')
+            .then((result) => {
+                let copy = [...data];
+                let moreData = result.data;
+                for (let i = 0; i < moreData.length; i++) {
+                    copy.push(moreData[i]);
+                }
+                setShoes(copy);
+            })
+            .catch(() => {
+                console.log('실패');
+            })
+    }
 
     return (
         <div className="App">
@@ -17,19 +38,48 @@ function App() {
                 <Container>
                     <Navbar.Brand href="#home">Navbar</Navbar.Brand>
                     <Nav className="me-auto">
-                        <Nav.Link href="#home">Home</Nav.Link>
-                        <Nav.Link href="#features">Features</Nav.Link>
-                        <Nav.Link href="#pricing">Pricing</Nav.Link>
+                        <Nav.Link onClick={() => {
+                            navigate('/')
+                        }}>Home</Nav.Link>
+                        <Nav.Link onClick={() => {
+                            navigate('/detail')
+                        }}>Detail</Nav.Link>
+                        <Nav.Link onClick={() => {
+                            navigate('/about')
+                        }}>About</Nav.Link>
+                        <Nav.Link onClick={() => {
+                            navigate('/event')
+                        }}>Event</Nav.Link>
                     </Nav>
                 </Container>
             </Navbar>
-            <div className="main-bg"></div>
 
-            <div className="container">
-                <div className="row">
-                    <Shoes shoes={shoes}/>
-                </div>
-            </div>
+            <Routes>
+                <Route path={"/"} element={
+                    <>
+                        <div className="main-bg"></div>
+                        <div className="container">
+                            <div className="row">
+                                <Shoes shoes={shoes}/>
+                            </div>
+                        </div>
+                        <button onClick={getData}>더보기</button>
+                    </>
+                }/>
+                <Route path={"/detail/:id"} element={<Detail shoes={shoes}/>}/>
+
+                <Route path={"/about"} element={<About/>}>
+                    <Route path={"member"} element={<div>멤버임</div>}/>
+                    <Route path={"location"} element={<div>위치정보임</div>}/>
+                </Route>
+
+                <Route path={"/event"} element={<Event/>}>
+                    <Route path={"one"} element={<div>첫 주문 시 양배추즙 서비스</div>}/>
+                    <Route path={"two"} element={<div>생일기념 쿠폰받기</div>}/>
+                </Route>
+
+                <Route path={"*"} element={<div>없는 페이지에요~</div>}/>
+            </Routes>
         </div>
     );
 }
