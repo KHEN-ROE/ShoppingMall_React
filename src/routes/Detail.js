@@ -1,5 +1,5 @@
 import {useParams} from "react-router-dom";
-import {useContext, useEffect, useState} from "react";
+import {useContext, useDeferredValue, useEffect, useState, useTransition} from "react";
 import {Nav} from "react-bootstrap"
 import {Context1} from "../App";
 import {useDispatch} from "react-redux";
@@ -11,10 +11,17 @@ export const Detail = (props) => {
 
     let {item, shoes} = useContext(Context1);
 
+    let {id} = useParams();
+
+    let fill = new Array(10000).fill(0);
+
+
     let [modal, setModal] = useState(true);
     let [input, setInput] = useState(0);
     let [tab, setTab] = useState(0);
-    let {id} = useParams();
+
+    let [isPanding, startTransition] = useTransition();
+    let useDeferredValue1 = useDeferredValue(input); // 늦게 처리해줌.
 
     useEffect(() => {
 
@@ -27,6 +34,17 @@ export const Detail = (props) => {
             clearTimeout(timer);
         }
     }, []);
+
+    useEffect(() => {
+        let watched = localStorage.getItem('watched');
+        watched = JSON.parse(watched);
+        watched.push(id);
+        // 중복제거
+        watched = new Set(watched);
+        watched = Array.from(watched);
+        localStorage.setItem('watched', JSON.stringify(watched));
+
+    }, [id]);
 
     function isNumeric(input) {
         return /^[0-9]+$/.test(input) ? null : alert("숫자만 입력");
@@ -51,15 +69,23 @@ export const Detail = (props) => {
                     <img src={`https://codingapple1.github.io/shop/shoes${id}.jpg`} width="100%" alt={"images"}/>
                 </div>
                 <div>
-                    <input type={"text"} onChange={(e) => inputText(e.target.value)}/>
+                    <input type={"text"} onChange={(e) =>  startTransition(() => inputText(e.target.value))}/>
                 </div>
+                {
+                    fill.map((item) => (
+                        <div>
+                            {input}
+                        </div>
+                    ))
+                }
                 <div className="col-md-6">
                     <h4 className="pt-5">{props.shoes[id - 1].title}</h4>
                     <p>{props.shoes[id - 1].content}</p>
                     <p>{props.shoes[id - 1].price}</p>
                     <button onClick={() => {
                         dispatch(add(props.shoes[id - 1].title))
-                    }} className="btn btn-danger">주문하기</button>
+                    }} className="btn btn-danger">주문하기
+                    </button>
                 </div>
             </div>
 
@@ -74,10 +100,10 @@ export const Detail = (props) => {
                     <Nav.Link eventKey="link2" onClick={() => setTab(2)}>버튼2</Nav.Link>
                 </Nav.Item>
             </Nav>
-            <TabContent tab={tab} />
+            <TabContent tab={tab}/>
         </div>
     );
-}
+};
 
 const TabContent = ({tab}) => {
 

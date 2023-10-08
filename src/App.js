@@ -3,19 +3,33 @@ import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import './App.css';
-import {createContext, useState} from "react";
+import {createContext, useEffect, useState} from "react";
 import data from './data.js';
 import Shoes from "./Shoes";
-import {Routes, Route, useNavigate} from 'react-router-dom'
-import {Detail} from "./routes/Detail";
+import {Routes, Route, useNavigate, json} from 'react-router-dom'
 import {About} from "./routes/About";
 import {Event} from "./routes/Event";
 import axios from "axios";
 import {Cart} from "./routes/Cart";
+import {Detail} from "./routes/Detail";
+import {useQuery} from "@tanstack/react-query";
 
 export let Context1 = createContext();
 
 function App() {
+
+    useEffect(() => {
+        if (localStorage.getItem('watched') === null) {
+            localStorage.setItem('watched', JSON.stringify([]));
+        }
+    }, []);
+
+    let obj = {name: 'kim'};
+    // 로컬스토리지에 object, array 저장하려면 제이슨으로 파싱해야함
+    localStorage.setItem('data', JSON.stringify(obj));
+    let datas = localStorage.getItem('data');
+    //꺼내서 사용하려면 다시 변환
+    console.log(JSON.parse(datas));
 
     let [shoes, setShoes] = useState(data);
     let [item, setItem] = useState([10, 11, 12]);
@@ -35,6 +49,15 @@ function App() {
                 console.log('실패');
             })
     }
+
+    let result = useQuery(['작명'], async () =>
+            await axios.get('https://codingapple1.github.io/userdata.json')
+                .then((a) => {
+                    console.log("요청됨");
+                    return a.data;
+                }),
+        {staleTime: 2000}
+    );
 
     return (
         <div className="App">
@@ -58,6 +81,9 @@ function App() {
                             navigate(('/cart'));
                         }}>Cart
                         </Nav.Link>
+                    </Nav>
+                    <Nav className={"ms-auto"}>
+                        {result.isLoading ? '로딩중' : result.data.name}
                     </Nav>
                 </Container>
             </Navbar>
